@@ -24,5 +24,5 @@ def check_security_txt(domain):
 
 # Example usage
 if __name__ == "__main__":
-    domain_input = input("Enter a domain (e.g., example.com): ").strip()
+    domain_input = input("Please enter a domain (e.g., example.com): ").strip()
     check_security_txt(domain_input)
