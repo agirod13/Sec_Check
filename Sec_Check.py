@@ -2,9 +2,11 @@ import requests
 import time
 import sys
 import os
+
 os.system("")  # Enables ANSI escape codes on Windows
 
 from urllib.parse import urljoin
+from playwright.sync_api import sync_playwright
 
 banner_lines = [
 """
@@ -34,6 +36,9 @@ def check_security_txt(domain):
             print(f"\033[92m[+] Found security.txt at {security_url}\033[0m")
             print("\n--- Contents ---\n")
             print(response.text)
+            with sync_playwright() as playwright:
+                capture_screenshot(playwright,security_url)
+            return security_url
         elif response.status_code == 404:
             print(f"\033[91m[-] No security.txt found at {security_url}\033[0m")
         else:
@@ -49,6 +54,16 @@ def animate_banner(lines, delay=0.1):
             time.sleep(delay / 150)  # Faster per character
         print()
         time.sleep(delay)  # Pause between lines
+
+def capture_screenshot(playwright,security_url):
+    domain = domain_input.split(".")[0].title()
+    browser = playwright.chromium.launch()
+    page = browser.new_page()
+    page.goto(security_url)
+    page.screenshot(path=domain + ' Security.txt Screenshot.png', full_page=True)
+    browser.close()
+    print("Saving to:", os.getcwd())
+
 
 # Example usage
 if __name__ == "__main__":
