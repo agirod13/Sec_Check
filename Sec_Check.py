@@ -41,8 +41,14 @@ def check_security_txt(domain):
             return security_url
         elif response.status_code == 404:
             print(f"\033[91m[-] No security.txt found at {security_url}\033[0m")
+            print("Still taking screenshot of the page...")
+            with sync_playwright() as playwright:
+                capture_screenshot(playwright,security_url)
         else:
             print(f"\033[91m[!] Received unexpected status code {response.status_code} from {security_url}\033[0m")
+            print("Still taking screenshot of the page...")
+            with sync_playwright() as playwright:
+                capture_screenshot(playwright,security_url)
     except requests.exceptions.RequestException as e:
         print(f"\033[91m[!] Error connecting to {security_url}: {e}\033[0m")
 
@@ -63,7 +69,6 @@ def capture_screenshot(playwright,security_url):
     page.screenshot(path=domain + ' Security.txt Screenshot.png', full_page=True)
     browser.close()
     print("Saving to:", os.getcwd())
-
 
 # Example usage
 if __name__ == "__main__":
