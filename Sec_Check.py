@@ -37,18 +37,18 @@ def check_security_txt(domain):
             print("\n--- Contents ---\n")
             print(response.text)
             with sync_playwright() as playwright:
-                capture_screenshot(playwright,security_url)
+                capture_screenshot(playwright, security_url, project_folder)
             return security_url
         elif response.status_code == 404:
             print(f"\033[91m[-] No security.txt found at {security_url}\033[0m")
             print("Still taking screenshot of the page...")
             with sync_playwright() as playwright:
-                capture_screenshot(playwright,security_url)
+                capture_screenshot(playwright, security_url, project_folder)
         else:
             print(f"\033[91m[!] Received unexpected status code {response.status_code} from {security_url}\033[0m")
             print("Still taking screenshot of the page...")
             with sync_playwright() as playwright:
-                capture_screenshot(playwright,security_url)
+                capture_screenshot(playwright, security_url, project_folder)
     except requests.exceptions.RequestException as e:
         print(f"\033[91m[!] Error connecting to {security_url}: {e}\033[0m")
 
@@ -61,17 +61,27 @@ def animate_banner(lines, delay=0.1):
         print()
         time.sleep(delay)  # Pause between lines
 
-def capture_screenshot(playwright,security_url):
+def capture_screenshot(playwright,security_url, project_folder):
     domain = domain_input.split(".")[0].title()
+    filename = "Security.txt_Screenshot.png"
+    filepath = os.path.join(project_folder, filename)
     browser = playwright.chromium.launch()
     page = browser.new_page()
     page.goto(security_url)
-    page.screenshot(path=domain + ' Security.txt Screenshot.png', full_page=True)
+    page.wait_for_load_state("networkidle")
+    page.screenshot(path = filepath, full_page=True)
     browser.close()
-    print("Saving to:", os.getcwd())
+    print(f"\033[92m[+] Screenshot saved as: {filepath}\033[0m")
 
-# Example usage
+def create_project_folder(name):
+    folder_name = name.strip().replace(" ", "_")  # Clean up name
+    os.makedirs(folder_name, exist_ok=True)
+    return folder_name
+
 if __name__ == "__main__":
     animate_banner(banner_lines)
+    project_name = input("Please enter project name: ").strip()
+    print(f"\033[93m[~] Creating folder {project_name}...\033[0m")
     domain_input = input("Please enter a domain (e.g., example.com): ").strip()
+    project_folder = create_project_folder(project_name)
     check_security_txt(domain_input)
