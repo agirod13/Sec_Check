@@ -41,16 +41,46 @@ def check_security_txt(domain):
             return security_url
         elif response.status_code == 404:
             print(f"\033[91m[-] No security.txt found at {security_url}\033[0m")
-            print("Still taking screenshot of the page...")
+            print("\033[93mStill taking screenshot of the page...\033[0m")
             with sync_playwright() as playwright:
                 capture_screenshot(playwright, security_url, project_folder)
         else:
             print(f"\033[91m[!] Received unexpected status code {response.status_code} from {security_url}\033[0m")
-            print("Still taking screenshot of the page...")
+            print("\033[93mStill taking screenshot of the page...\033[0m")
             with sync_playwright() as playwright:
                 capture_screenshot(playwright, security_url, project_folder)
     except requests.exceptions.RequestException as e:
         print(f"\033[91m[!] Error connecting to {security_url}: {e}\033[0m")
+
+def check_robots_txt(domain):
+    # Ensures domain starts with http or https
+    if not domain.startswith(('http://', 'https://')):
+        domain = 'https://' + domain
+
+    # Constructs the URL for the robots.txt file
+    robots_url = urljoin(domain, '/robots.txt')
+
+    try:
+        response = requests.get(robots_url, timeout=10)
+        if response.status_code == 200:
+            print(f"\033[92m[+] Found robots.txt at {robots_url}\033[0m")
+            print("\n--- Contents ---\n")
+            print(response.text)
+            with sync_playwright() as playwright:
+                capture_screenshot_robots(playwright, robots_url, project_folder)
+            return robots_url
+        elif response.status_code == 404:
+            print(f"\033[91m[-] No robots.txt found at {robots_url}\033[0m")
+            print("\033[93mStill taking screenshot of the page...\033[0m")
+            with sync_playwright() as playwright:
+                capture_screenshot_robots(playwright, robots_url, project_folder)
+        else:
+            print(f"\033[9m[!] Received unexpected status code {response.status_code} from {robots_url}\033[0m")
+            print("\033[93mStill taking screenshot of the page...\033[0m")
+            with sync_playwright() as playwright:
+                capture_screenshot_robots(playwright, robots_url, project_folder)
+    except requests.exceptions.RequestException as e:
+        print(f"\033[91m[!] Error connecting to {robots_url}: {e}\033[0m")
 
 def animate_banner(lines, delay=0.1):
     for line in lines:
@@ -71,7 +101,19 @@ def capture_screenshot(playwright,security_url, project_folder):
     page.wait_for_load_state("networkidle")
     page.screenshot(path = filepath, full_page=True)
     browser.close()
-    print(f"\033[92m[+] Screenshot saved as: {filepath}\033[0m")
+    print(f"\033[93m[+] Screenshot saved as: {filepath}\033[0m")
+
+def capture_screenshot_robots(playwright, robots_url, project_folder):
+    domain = domain_input.split(".")[0].title()
+    filename = "Robots.txt_Screenshot.png"
+    filepath = os.path.join(project_folder, filename)
+    browser = playwright.chromium.launch()
+    page = browser.new_page()
+    page.goto(robots_url)
+    page.wait_for_load_state("networkidle")
+    page.screenshot(path = filepath, full_page=True)
+    browser.close()
+    print(f"\033[93m[+] Screenshot saved as: {filepath}\033[0m")
 
 def create_project_folder(name):
     folder_name = name.strip().replace(" ", "_")  # Clean up name
@@ -85,3 +127,4 @@ if __name__ == "__main__":
     domain_input = input("Please enter a domain (e.g., example.com): ").strip()
     project_folder = create_project_folder(project_name)
     check_security_txt(domain_input)
+    check_robots_txt(domain_input)
